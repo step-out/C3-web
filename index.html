@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C3Benchmark Leaderboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Rajdhani', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%);
+      margin: 0;
+      font-weight: 400;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .header, .card, .tabs, .category-card {
+      background: linear-gradient(135deg, #e0e7ef 0%, #b6d0f7 100%);
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+    }
+    .header { padding: 24px; border-bottom: 1px solid #eee; }
+    .header-flex { display: flex; justify-content: space-between; align-items: center; }
+    .logo { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px; }
+    .header-title { font-size: 2rem; font-weight: 700; margin: 0; }
+    .header-desc { color: #6b7280; font-size: 0.9rem; margin: 0; }
+    .header-links a { display: inline-flex; align-items: center; margin-left: 8px; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; text-decoration: none; color: #374151; font-size: 0.95rem; background: #f9fafb; }
+    .header-links a:hover { background: #f3f4f6; }
+    .header-links .icon { margin-right: 6px; font-size: 1.1em; }
+    .overview-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .card { padding: 20px; }
+    .card-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 30px; }
+    .card-value { font-size: 1.0rem; font-weight: 400; }
+    .card-label { color: #6b7280; font-size: 0.95rem; font-weight: 400; }
+    .tabs { padding: 20px; }
+    .tabs-list { display: flex; border-bottom: 1px solid #eee; margin-bottom: 16px; }
+    .tabs-list button { flex: 1; padding: 10px; background: none; border: none; font-size: 1rem; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tabs-list button.active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: bold; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th, td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #eee; }
+    th { background: #f3f4f6; font-weight: 700; }
+    th.overall-col { font-weight: 700; font-size: 1.05em; }
+    td, td.overall-col { font-weight: 400; }
+    .rank-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.95rem; font-weight: 600; }
+    .rank-1 { background: linear-gradient(90deg, #ffd700, #ffb300); color: #fff; }
+    .rank-2 { background: linear-gradient(90deg, #c0c0c0, #b0b0b0); color: #fff; }
+    .rank-3 { background: linear-gradient(90deg, #cd7f32, #b87333); color: #fff; }
+    .rank-default { background: #e5e7eb; color: #6b7280; }
+    .score-green, .score-blue, .score-orange, .score-red, .score-muted, td.overall-col {
+      font-family: 'Rajdhani', Arial, sans-serif;
+      letter-spacing: 0.5px;
+    }
+    .score-green { color: #16a34a; font-weight: 600; }
+    .score-blue { color: #2563eb; font-weight: 600; }
+    .score-orange { color: #ea580c; font-weight: 600; }
+    .score-red { color: #dc2626; font-weight: 600; }
+    .score-muted { color: #9ca3af; }
+    .category-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .category-card { padding: 16px; }
+    .category-card h3 { font-weight: 700; }
+    @media (max-width: 900px) {
+      .overview-cards { grid-template-columns: 1fr 1fr; }
+      .category-cards { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .overview-cards, .category-cards { grid-template-columns: 1fr; }
+    }
+    .card, .category-card, .tabs {
+      transition: box-shadow 0.2s cubic-bezier(.4,2,.6,1), transform 0.2s cubic-bezier(.4,2,.6,1);
+    }
+    .card:hover, .category-card:hover, .tabs:hover {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.10);
+      transform: translateY(-4px) scale(1.03);
+    }
+    tbody tr:nth-child(even) { background: #f4f8fb; }
+    tbody tr:hover { background: #e3edfa; transition: background 0.2s; }
+    .score-font-selector {
+      margin: 0 0 16px 0;
+      padding: 6px 12px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+    }
+    th.selected-col, td.selected-col {
+      font-weight: 1200 !important;
+      background: #e6f0fa;
+      transition: background 0.15s;
+    }
+    th.selected-col:hover, td.selected-col:hover {
+      background: #cfe2f7;
+    }
+    th.sortable {
+      position: relative;
+      transition: background 0.15s;
+    }
+    th.sortable:hover {
+      background: #dbeafe;
+    }
+    th.sortable:active {
+      background: #bfdbfe;
+    }
+    th.sortable .sort-icon {
+      font-size: 0.85em;
+      margin-left: 4px;
+      color: #60a5fa;
+      vertical-align: middle;
+      user-select: none;
+    }
+    th.overall-col, td.overall-col {
+      font-weight: 600;
+    }
+    .model-link-btn {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 0.95em;
+      color: #2563eb;
+      background: #e0e7ef;
+      border-radius: 50%;
+      padding: 2px 6px;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .model-link-btn:hover {
+      background: #2563eb;
+      color: #fff;
+    }
+    td.model-cell {
+      white-space: nowrap;
+    }
+    th, td {
+      white-space: nowrap;
+    }
+    .sidebar-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 210px;
+      background: linear-gradient(135deg, #e0e7ef 0%, #b6d0f7 100%);
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-top-right-radius: 12px;
+      border-bottom-right-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.06);
+      padding: 0 0 0 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .sidebar-nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .sidebar-nav li {
+      margin: 0 0 12px 0;
+      width: 100%;
+    }
+    .sidebar-nav a {
+      display: block;
+      padding: 10px 24px;
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 8px 0 0 8px;
+      font-size: 1.08em;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active {
+      background: #2563eb;
+      color: #fff;
+    }
+    .sidebar-nav a.active {
+      background: #2563eb;
+      color: #fff;
+      position: relative;
+    }
+    .sidebar-nav a.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: #1d4ed8;
+      border-radius: 4px 0 0 4px;
+    }
+    @media (max-width: 900px) {
+      .sidebar-nav { display: none; }
+      .container { margin-left: 0 !important; }
+    }
+    .main-content {
+      margin-left: 230px;
+      transition: margin 0.2s;
+    }
+    #categories {
+      scroll-margin-top: 40px;
+    }
+    #examples {
+      scroll-margin-top: 40px;
+    }
+    .ex-tab-bar {
+      display: flex;
+      width: 100%;
+      margin-bottom: 16px;
+      background: #e0e7ef;
+      border-radius: 12px 12px 0 0;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.06);
+    }
+    .ex-tab-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      border: none;
+      background: linear-gradient(135deg, #e0e7ef 60%, #dbeafe 100%);
+      color: #2563eb;
+      font-size: 1em;
+      font-weight: 700;
+      padding: 14px 0 12px 0;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s, z-index 0.18s;
+      border-radius: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .ex-tab-btn + .ex-tab-btn {
+      border-left: 1.5px solid #d1d5db;
+    }
+    .ex-tab-btn.active, .ex-tab-btn:focus {
+      background: linear-gradient(90deg, #2563eb 80%, #1d4ed8 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.13);
+      z-index: 2;
+      outline: none;
+    }
+    .ex-tab-btn:not(.active):hover {
+      background: #dbeafe;
+    }
+    .ex-lang-panel {
+      margin-top: 0;
+    }
+    .ex-cat-card {
+      background: linear-gradient(135deg,#f8fbff 0%,#e0f2fe 100%);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.06);
+      margin-bottom: 18px;
+      padding: 18px 18px 8px 18px;
+      border: 1.5px solid #e0f2fe;
+    }
+    .ex-cat-card h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+    .ex-cat-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .ex-cat-card li {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    .ex-cat-card audio {
+      align-self: center;
+    }
+    .ex-cat-card span {
+      display: block;
+      margin-left: 0;
+      margin-top: 4px;
+      text-align: center;
+    }
+    .sidebar-nav .nav-gap {
+      height: 14px;
+      width: 70%;
+      margin: 12px auto 12px auto;
+      border-bottom: 1.2px solid #e5e7eb;
+      background: none;
+      border-radius: 6px;
+    }
+    @media (max-width: 900px) {
+      .sidebar-nav .nav-divider { display: none; }
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* 中文示例部分使用楷体 */
+    #ex-zh .ex-cat-card span,
+    #ex-zh .ex-cat-card li {
+      font-family: 'KaiTi', '楷体', 'STKaiti', '华文楷体', 'Microsoft YaHei', Arial, sans-serif;
+    }
+    
+    /* 音频和文字分行显示 */
+    .ex-cat-card li {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    
+    .ex-cat-card audio {
+      align-self: center;
+    }
+    
+    .ex-cat-card span {
+      display: block;
+      margin-left: 0;
+      margin-top: 4px;
+      text-align: center;
+    }
+    
+    /* 指令文字使用灰色 */
+    .ex-cat-card span .instruction-text {
+      color: #6b7280;
+      font-style: italic;
+    }
+    /* --- Categories 美化 --- */
+    .category-groups {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 36px;
+      margin-top: 8px;
+    }
+    .category-group-card {
+      flex: 1 1 340px;
+      min-width: 320px;
+      background: linear-gradient(135deg, #e0e7ef 0%, #c3dafe 100%);
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(37,99,235,0.10), 0 2px 8px rgba(37,99,235,0.08);
+      padding: 36px 28px 28px 28px;
+      transition: box-shadow 0.22s, transform 0.22s;
+      margin-bottom: 0;
+    }
+    .category-group-card:hover {
+      box-shadow: 0 8px 36px rgba(37,99,235,0.18), 0 4px 16px rgba(37,99,235,0.13);
+      transform: translateY(-4px) scale(1.025);
+    }
+    .category-group-card h3 {
+      margin-top: 0;
+      color: #1d4ed8;
+      font-size: 1.35em;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .category-group-card .card-label {
+      color: #374151;
+      margin-bottom: 18px;
+      font-size: 1.05em;
+    }
+    .category-group-card .category-cards {
+      display: grid;
+      gap: 18px;
+      width: 100%;
+    }
+    .category-group-card.ambiguity .category-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .category-group-card.contextdep .category-cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width: 900px) {
+      .category-group-card .category-cards {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    .category-card {
+      flex: 1 1 0%;
+      min-width: 0;
+      max-width: 220px;
+      background: #fff;
+      box-shadow: 0 1px 6px rgba(37,99,235,0.07);
+      border-radius: 14px;
+      border: 2px solid #e0e7ef;
+      padding: 18px 14px 14px 14px;
+      transition: border 0.18s, box-shadow 0.18s, transform 0.18s;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .category-card:hover {
+      border: 2.5px solid #2563eb;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.10);
+      transform: scale(1.035);
+    }
+    .category-card h4 {
+      margin: 0 0 8px 0;
+      color: #2563eb;
+      font-size: 1.08em;
+      font-weight: 700;
+    }
+    .category-card .card-label {
+      font-size: 0.99em;
+      color: #374151;
+    }
+    @media (max-width: 1100px) {
+      .category-groups { flex-direction: column; gap: 28px; }
+      .category-group-card { min-width: 0; }
+      .category-group-card .category-cards { flex-direction: column; gap: 14px; }
+      .category-card { max-width: none; }
+    }
+    @media (max-width: 700px) {
+      .category-group-card { padding: 20px 8px 16px 8px; }
+      .category-group-card h3 { font-size: 1.1em; }
+    }
+    /* QA块样式 */
+    .qa-blocks {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .question-block {
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 16px 20px;
+      color: #1e293b;
+      font-size: 1em;
+      font-family: inherit;
+      border: 1.5px solid #2563eb;         /* 更深的主色蓝边框 */
+      box-shadow: 0 2px 12px 0 #2563eb33;  /* 深蓝色带透明度阴影 */
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .answer-block {
+      background: #e0e7ef;
+      border-radius: 10px;
+      padding: 16px 20px;
+      color: #1e293b;
+      font-size: 1em;
+      font-family: inherit;
+      border: 1.5px solid #a5b4fc;         /* 柔和的淡蓝边框 */
+      box-shadow: 0 2px 12px 0 #60a5fa33;  /* 亮蓝色带透明度阴影 */
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .response-text { font-size:1.05em; color:#1e293b; font-family:inherit; line-height:1.7; background:none; padding:0; margin:0 0 4px 0; word-break:break-word; }
+    .correct-label {
+      background:#16a34a;
+      color:#fff !important;
+      padding:2px 10px;
+      border-radius:7px;
+      font-size:0.97em;
+      font-weight:500;
+      margin-left:12px;
+      display:inline-block;
+      min-width:70px;
+      text-align:center;
+    }
+    .incorrect-label {
+      background:#dc2626;
+      color:#fff !important;
+      padding:2px 10px;
+      border-radius:7px;
+      font-size:0.97em;
+      font-weight:500;
+      margin-left:12px;
+      display:inline-block;
+      min-width:70px;
+      text-align:center;
+    }
+    /* Response部分中文用楷体 */
+    #model-response-examples .response-text.zh, #model-response-examples .model-response.zh, #model-response-examples .input-example.zh, #model-response-examples .card-label.zh {
+      font-family: 'KaiTi', '楷体', 'STKaiti', '华文楷体', 'Microsoft YaHei', Arial, sans-serif;
+    }
+    /* First/Last Response标签高亮 */
+    .response-label {
+      display: block;
+      width: 100%;
+      font-size: 1.12em;
+      font-weight: 700;
+      color: #2563eb;
+      padding: 8px 0 8px 16px;
+      border-left: 4px solid #2563eb;
+      margin: 8px 0 4px 0;
+      background: #f0f6ff;
+      border-radius: 0 8px 8px 0;
+      box-sizing: border-box;
+      text-align: left;
+    }
+    #ex-zh .ex-cat-card h4 {
+      font-family: inherit !important;
+    }
+    /* 2. 视觉细节优化 */
+    .response-label, .correct-label, .incorrect-label {
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    }
+    .response-label:hover {
+      background: #e0e7ff;
+      color: #1d4ed8;
+    }
+    .correct-label:hover {
+      background: #15803d;
+    }
+    .incorrect-label:hover {
+      background: #b91c1c;
+    }
+    .card {
+      transition: box-shadow 0.22s, transform 0.22s;
+    }
+    .card:hover {
+      box-shadow: 0 12px 36px rgba(37,99,235,0.18), 0 4px 16px rgba(37,99,235,0.13);
+      transform: translateY(-2px) scale(1.015);
+    }
+    /* 主色蓝统一 */
+    :root {
+      --main-blue: #2563eb;
+    }
+    .card-title, .response-label, .correct-label, .incorrect-label {
+      color: var(--main-blue);
+    }
+
+    /* 3. 可访问性 */
+    audio[aria-label] {
+      outline: 2px solid #2563eb33;
+      outline-offset: 2px;
+    }
+    /* 强化对比度 */
+    .card-label, .response-text, .answer-block, .question-block {
+      color: #1e293b;
+    }
+
+    /* 4. 交互体验 */
+    html {
+      scroll-behavior: smooth;
+    }
+    /* 当前区块高亮条 */
+    .section-highlight {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(90deg,#2563eb 0%,#60a5fa 100%);
+      border-radius: 0 0 12px 12px;
+      z-index: 10;
+      margin-bottom: 8px;
+      opacity: 0.12;
+      pointer-events: none;
+      transition: opacity 0.18s;
+    }
+
+    /* 5. 细节美化 */
+    /* 表格排序箭头 */
+    th.sortable .sort-icon {
+      font-family: Arial, sans-serif;
+      font-size: 1.1em;
+      margin-left: 4px;
+      color: #2563eb;
+      vertical-align: middle;
+      user-select: none;
+    }
+    th.selected-col .sort-icon {
+      color: #1d4ed8;
+      font-weight: bold;
+    }
+    /* 渐变分割线 */
+    .section-divider {
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg,#e0e7ef 0%,#2563eb22 100%);
+      border: none;
+      border-radius: 2px;
+      margin: 36px 0 32px 0;
+    }
+    /* 字体分层 */
+    .card-title {
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .header-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .response-label {
+      font-size: 1.12em;
+      font-weight: 700;
+    }
+    .correct-label, .incorrect-label {
+      font-size: 1em;
+      font-weight: 700;
+    }
+    .response-phenomena-title {
+      font-size: 1.18em;
+      font-weight: 800;
+      color: #2563eb;
+      border-left: 5px solid #2563eb;
+      padding-left: 14px;
+      margin-bottom: 18px;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+  <script>
+    function showTab(tab) {
+      document.getElementById('tab-english').style.display = tab === 'english' ? 'block' : 'none';
+      document.getElementById('tab-chinese').style.display = tab === 'chinese' ? 'block' : 'none';
+      document.getElementById('btn-english').classList.toggle('active', tab === 'english');
+      document.getElementById('btn-chinese').classList.toggle('active', tab === 'chinese');
+    }
+    function getScoreClass(score) {
+      if (score > 60) return 'score-green';
+      if (score > 40) return 'score-blue';
+      if (score > 20) return 'score-orange';
+      return 'score-red';
+    }
+    function updateScoreColors(table) {
+      const tbody = table.querySelector('tbody');
+      tbody.querySelectorAll('tr').forEach(row => {
+        for (let i = 2; i < row.children.length; ++i) { // 跳过rank和model
+          const td = row.children[i];
+          if (!td) continue;
+          // 只处理分数字段
+          const val = parseFloat(td.innerText);
+          td.classList.remove('score-green', 'score-blue', 'score-orange', 'score-red', 'score-muted');
+          if (!isNaN(val)) {
+            td.classList.add(getScoreClass(val));
+          } else {
+            td.classList.add('score-muted');
+          }
+        }
+      });
+    }
+    function sortTableByColumn(table, colIndex) {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      // 排除非数字的情况（如"—"），优先数字降序
+      // 排序时rank列不变，只对后续列排序
+      // 先保存rank列内容
+      const rankCells = rows.map(row => row.children[0].innerHTML);
+      rows.sort((a, b) => {
+        let va = a.children[colIndex].innerText.replace(/[^\d.\-]/g, '');
+        let vb = b.children[colIndex].innerText.replace(/[^\d.\-]/g, '');
+        va = va === '' ? -Infinity : parseFloat(va);
+        vb = vb === '' ? -Infinity : parseFloat(vb);
+        return vb - va;
+      });
+      // 重新插入排序后的行，并恢复rank列内容
+      rows.forEach((row, i) => {
+        row.children[0].innerHTML = rankCells[i];
+        tbody.appendChild(row);
+      });
+      updateScoreColors(table);
+    }
+    function clearSelectedCol(table) {
+      table.querySelectorAll('th, td').forEach(cell => {
+        cell.classList.remove('selected-col');
+      });
+    }
+    function setSelectedCol(table, colIndex) {
+      table.querySelectorAll('tr').forEach(row => {
+        if (row.children[colIndex]) {
+          row.children[colIndex].classList.add('selected-col');
+        }
+      });
+      // 表头也加粗
+      const ths = table.querySelectorAll('th');
+      if (ths[colIndex]) ths[colIndex].classList.add('selected-col');
+    }
+    function addTableSortHandlers(tableId) {
+      const table = document.querySelector(`#${tableId} table`);
+      if (!table) return;
+      const ths = table.querySelectorAll('th');
+      ths.forEach((th, idx) => {
+        // 只允许数据列（非Rank/Model）排序
+        if (idx > 1) {
+          th.classList.add('sortable');
+          if (!th.querySelector('.sort-icon')) {
+            const icon = document.createElement('span');
+            icon.className = 'sort-icon';
+            icon.innerText = '▼';
+            th.appendChild(icon);
+          }
+          th.style.cursor = 'pointer';
+          th.title = '点击按此列降序排序';
+          th.addEventListener('click', function() {
+            sortTableByColumn(table, idx);
+            clearSelectedCol(table);
+            setSelectedCol(table, idx);
+          });
+        }
+      });
+      // 默认overall列加粗
+      clearSelectedCol(table);
+      setSelectedCol(table, ths.length - 1);
+    }
+    window.onload = function() {
+      showTab('english');
+      addTableSortHandlers('tab-english');
+      addTableSortHandlers('tab-chinese');
+      // 初始化分数颜色
+      updateScoreColors(document.querySelector('#tab-english table'));
+      updateScoreColors(document.querySelector('#tab-chinese table'));
+    };
+    // 更鲁棒的高亮逻辑：IntersectionObserver + 点击高亮
+    (function() {
+      const sectionIds = ["overview","results","categories","examples","submission","citation"];
+      const navLinks = Array.from(document.querySelectorAll('.sidebar-nav a'));
+      let manualActive = false;
+      // 点击时高亮
+      navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          manualActive = true;
+          navLinks.forEach(a => a.classList.remove('active'));
+          this.classList.add('active');
+          setTimeout(() => { manualActive = false; }, 1200); // 1.2s后恢复自动
+        });
+      });
+      // IntersectionObserver自动高亮
+      const observer = new window.IntersectionObserver((entries) => {
+        if (manualActive) return;
+        let visible = entries.filter(e => e.isIntersecting && e.intersectionRatio > 0.3);
+        if (visible.length === 0) {
+          // 处理页面底部情况
+          let lastSection = sectionIds[sectionIds.length-1];
+          let lastEl = document.getElementById(lastSection);
+          if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 2) {
+            navLinks.forEach(a => a.classList.remove('active'));
+            let nav = document.querySelector('.sidebar-nav a[href="#'+lastSection+'"]');
+            if (nav) nav.classList.add('active');
+          }
+          return;
+        }
+        // 取最上方的可见section
+        visible.sort((a, b) => a.target.offsetTop - b.target.offsetTop);
+        let id = visible[0].target.id;
+        navLinks.forEach(a => a.classList.remove('active'));
+        let nav = document.querySelector('.sidebar-nav a[href="#'+id+'"]');
+        if (nav) nav.classList.add('active');
+      }, { threshold: [0.3, 0.6, 1.0] });
+      sectionIds.forEach(id => {
+        let el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
+    })();
+    function showExampleLang(lang) {
+      document.getElementById('ex-en').style.display = lang === 'en' ? 'block' : 'none';
+      document.getElementById('ex-zh').style.display = lang === 'zh' ? 'block' : 'none';
+      document.getElementById('btn-ex-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-ex-zh').classList.toggle('active', lang === 'zh');
+    }
+  </script>
+</head>
+<body>
+  <!-- 左侧目录导航 -->
+  <nav class="sidebar-nav">
+    <ul>
+      <li class="nav-divider"></li>
+      <li><a href="#overview" class="nav-link">🏡 Overview</a></li>
+      <li class="nav-divider"></li>
+      <li><a href="#results" class="nav-link">🏆 Leaderboard</a></li>
+      <li class="nav-divider"></li>
+      <li><a href="#categories" class="nav-link">🗂️ Categories</a></li>
+      <li class="nav-divider"></li>
+      <li><a href="#examples" class="nav-link">🧩 Examples</a></li>
+      <li class="nav-divider"></li>
+      <li><a href="#model-response-examples" class="nav-link">🔊 Responses</a></li>
+      <li class="nav-divider"></li>
+      <li><a href="#submission" class="nav-link">📤 Submission</a></li>
+      <li class="nav-divider"></li>
+      <li><a href="#citation" class="nav-link">📄 Citation</a></li>
+    </ul>
+  </nav>
+  <div class="main-content">
+    <!-- 美化标题 -->
+    <div class="header" id="overview">
+      <div class="container">
+        <div class="header-flex">
+          <div style="display: flex; align-items: center;">
+            <div class="logo"><img src="images/logo.png" alt="Logo" style="width:40px;height:40px;object-fit:contain;display:block;margin:auto;" /></div>
+            <div>
+              <h1 class="header-title" style="margin-bottom:0.2em;">
+                C<sup style="font-size:0.6em;vertical-align:super;">3</sup>Benchmark
+              </h1>
+              <p class="header-desc" style="font-size:1.08em;margin-bottom:0;">
+                <span style="text-decoration:underline;text-decoration-thickness:2px;">C</span>hallenges in <span style="text-decoration:underline;text-decoration-thickness:2px;">C</span>omplex <span style="text-decoration:underline;text-decoration-thickness:2px;">C</span>onversations
+              </p>
+              <p class="header-desc">Spoken Dialogue Model Evaluation</p>
+            </div>
+          </div>
+                      <div class="header-links">
+              <a href="https://arxiv.org" target="_blank" rel="noopener"><span class="icon"><img src="images/arXiv-logo.png" alt="arXiv" style="width:11px;height:16px;vertical-align:middle;"></span>Paper</a>
+              <a href="https://huggingface.co/datasets/ChengqianMa/C3" target="_blank" rel="noopener"><span class="icon"><img src="images/hf-logo.png" alt="HuggingFace" style="width:17px;height:17px;vertical-align:middle;"></span>Dataset</a>
+              <a href="https://github.com/step-out/C3" target="_blank" rel="noopener"><span class="icon"><img src="images/github-logo.png" alt="GitHub" style="width:16px;height:16px;vertical-align:middle;"></span>Code</a>
+            </div>
+        </div>
+        <p class="header-desc" style="margin-top: 16px; max-width: 800px;">
+          Comprehensive evaluation of Spoken Dialogue Models (SDMs) across Chinese and English dialogue data, measuring performance in phonological ambiguity, semantic understanding, omission, coreference, and multi-turn interactions.
+        </p>
+      </div>
+    </div>
+    <div class="container" id="results">
+      <div class="overview-cards">
+        <div class="card">
+          <div class="card-title">Models Evaluated</div>
+          <div class="card-value">10</div>
+          <div class="card-label">Spoken Dialogue Models</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Languages</div>
+          <div class="card-value">2</div>
+          <div class="card-label">Chinese & English</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Categories</div>
+          <div class="card-value">7</div>
+          <div class="card-label">Evaluation dimensions</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Best Overall</div>
+          <div style="margin-top: 8px;">
+            <div style="margin-bottom: 8px;">
+              <span class="card-value">55.68%</span>
+              <div class="card-label">EN: Qwen2.5-Omni</div>
+            </div>
+            <div>
+              <span class="card-value">40.08%</span>
+              <div class="card-label">ZH: Qwen2.5-Omni</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tabs-list">
+          <button id="btn-english" onclick="showTab('english')">Results on English Subset</button>
+          <button id="btn-chinese" onclick="showTab('chinese')">Results on Chinese Subset</button>
+        </div>
+        <div id="tab-english" class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Model</th>
+                <th>Phonological</th>
+                <th>Semantic</th>
+                <th>Ambiguity</th>
+                <th>Omission</th>
+                <th>Coreference</th>
+                <th>Multi-turn</th>
+                <th>Context-dep.</th>
+                <th class="overall-col">Overall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="rank-badge rank-1">🥇</span></td><td class="model-cell">GPT-4o-Audio-Prev.<a class="model-link-btn" href="https://platform.openai.com/docs/guides/audio/quickstart" target="_blank" title="paper/link">🔗</a></td><td class="score-green">53.45</td><td class="score-green">70.59</td><td class="score-green">62.02</td><td class="score-orange">16.18</td><td class="score-green">91.11</td><td class="score-blue">47.06</td><td class="score-green">51.45</td><td class="score-blue overall-col">55.68</td></tr>
+              <tr><td><span class="rank-badge rank-2">🥈</span></td><td>Qwen2.5-Omni<a class="model-link-btn" href="https://github.com/QwenLM/Qwen2.5-Omni" target="_blank" title="paper/link">🔗</a></td><td class="score-green">48.28</td><td class="score-blue">32.35</td><td class="score-blue">40.31</td><td class="score-orange">15.20</td><td class="score-green">68.15</td><td class="score-green">95.59</td><td class="score-green">59.64</td><td class="score-green overall-col">51.91</td></tr>
+              <tr><td><span class="rank-badge rank-3">🥉</span></td><td>Kimi-Audio<a class="model-link-btn" href="https://github.com/MoonshotAI/Kimi-Audio" target="_blank" title="paper/link">🔗</a></td><td class="score-green">46.55</td><td class="score-orange">29.41</td><td class="score-orange">37.98</td><td class="score-red">10.29</td><td class="score-green">87.41</td><td class="score-muted">—</td><td class="score-green">48.85</td><td class="score-blue overall-col">43.42</td></tr>
+              <tr><td><span class="rank-badge rank-default">#4</span></td><td>GLM-4-Voice<a class="model-link-btn" href="https://github.com/THUDM/GLM-4-Voice" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">27.59</td><td class="score-orange">15.69</td><td class="score-orange">21.64</td><td class="score-red">6.37</td><td class="score-green">68.98</td><td class="score-green">58.82</td><td class="score-green">44.73</td><td class="score-blue overall-col">35.49</td></tr>
+              <tr><td><span class="rank-badge rank-default">#5</span></td><td>Step-Audio<a class="model-link-btn" href="https://github.com/stepfun-ai/Step-Audio" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">29.31</td><td class="score-orange">21.57</td><td class="score-orange">25.44</td><td class="score-red">10.78</td><td class="score-green">57.31</td><td class="score-blue">41.18</td><td class="score-blue">36.43</td><td class="score-blue overall-col">32.03</td></tr>
+              <tr><td><span class="rank-badge rank-default">#6</span></td><td>VITA-Audio<a class="model-link-btn" href="https://github.com/VITA-MLLM/VITA-Audio" target="_blank" title="paper/link">🔗</a></td><td class="score-blue">31.03</td><td class="score-orange">18.63</td><td class="score-orange">24.83</td><td class="score-red">7.84</td><td class="score-green">74.81</td><td class="score-green">60.29</td><td class="score-green">47.65</td><td class="score-blue overall-col">38.52</td></tr>
+              <tr><td><span class="rank-badge rank-default">#7</span></td><td>LLaMA-Omni<a class="model-link-btn" href="https://github.com/ictnlp/LLaMA-Omni" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">15.52</td><td class="score-orange">12.75</td><td class="score-orange">14.13</td><td class="score-red">5.88</td><td class="score-green">56.94</td><td class="score-green">55.88</td><td class="score-blue">39.57</td><td class="score-blue overall-col">29.39</td></tr>
+              <tr><td><span class="rank-badge rank-default">#8</span></td><td>MooER-Omni<a class="model-link-btn" href="https://github.com/MooreThreads/MooER" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">18.97</td><td class="score-green">46.08</td><td class="score-orange">32.52</td><td class="score-red">4.90</td><td class="score-blue">36.02</td><td class="score-blue">41.18</td><td class="score-orange">27.37</td><td class="score-blue overall-col">29.43</td></tr>
+              <tr><td><span class="rank-badge rank-default">#9</span></td><td>Freeze-Omni<a class="model-link-btn" href="https://github.com/VITA-MLLM/Freeze-Omni" target="_blank" title="paper/link">🔗</a></td><td class="score-red">8.62</td><td class="score-orange">11.76</td><td class="score-orange">10.19</td><td class="score-orange">6.86</td><td class="score-blue">47.22</td><td class="score-blue">44.12</td><td class="score-blue">32.73</td><td class="score-orange overall-col">23.72</td></tr>
+              <tr><td><span class="rank-badge rank-default">#10</span></td><td>Moshi<a class="model-link-btn" href="https://github.com/kyutai-labs/moshi" target="_blank" title="paper/link">🔗</a></td><td class="score-red">10.34</td><td class="score-red">9.80</td><td class="score-red">10.07</td><td class="score-red">2.94</td><td class="score-orange">24.63</td><td class="score-muted">—</td><td class="score-orange">13.79</td><td class="score-orange overall-col">11.93</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="tab-chinese" class="table-responsive" style="display:none;">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Model</th>
+                <th>Phonological</th>
+                <th>Semantic</th>
+                <th>Ambiguity</th>
+                <th>Omission</th>
+                <th>Coreference</th>
+                <th>Multi-turn</th>
+                <th>Context-dep.</th>
+                <th class="overall-col">Overall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="rank-badge rank-1">🥇</span></td><td class="model-cell">Qwen2.5-Omni<a class="model-link-btn" href="https://github.com/QwenLM/Qwen2.5-Omni" target="_blank" title="paper/link">🔗</a></td><td class="score-green">27.03</td><td class="score-orange">6.78</td><td class="score-orange">16.90</td><td class="score-green">27.86</td><td class="score-green">55.83</td><td class="score-green">82.89</td><td class="score-green">55.53</td><td class="score-green overall-col">40.08</td></tr>
+              <tr><td><span class="rank-badge rank-2">🥈</span></td><td class="model-cell">GPT-4o-Audio-Prev.<a class="model-link-btn" href="https://platform.openai.com/docs/guides/audio/quickstart" target="_blank" title="paper/link">🔗</a></td><td class="score-green">29.73</td><td class="score-orange">5.93</td><td class="score-orange">17.83</td><td class="score-green">44.29</td><td class="score-green">54.17</td><td class="score-blue">13.16</td><td class="score-green">37.20</td><td class="score-blue overall-col">29.45</td></tr>
+              <tr><td><span class="rank-badge rank-3">🥉</span></td><td class="model-cell">MooER-Omni<a class="model-link-btn" href="https://github.com/MooreThreads/MooER" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">20.27</td><td class="score-red">2.12</td><td class="score-orange">11.19</td><td class="score-green">32.14</td><td class="score-blue">32.50</td><td class="score-green">63.16</td><td class="score-green">42.60</td><td class="score-blue overall-col">30.04</td></tr>
+              <tr><td><span class="rank-badge rank-default">#4</span></td><td class="model-cell">Kimi-Audio<a class="model-link-btn" href="https://github.com/MoonshotAI/Kimi-Audio" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">20.27</td><td class="score-red">4.24</td><td class="score-orange">12.25</td><td class="score-green">29.29</td><td class="score-green">40.00</td><td class="score-muted">—</td><td class="score-green">34.64</td><td class="score-blue overall-col">23.45</td></tr>
+              <tr><td><span class="rank-badge rank-default">#5</span></td><td class="model-cell">Step-Audio<a class="model-link-btn" href="https://github.com/stepfun-ai/Step-Audio" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">22.97</td><td class="score-red">5.08</td><td class="score-orange">14.03</td><td class="score-green">17.86</td><td class="score-green">50.83</td><td class="score-blue">7.89</td><td class="score-orange">25.53</td><td class="score-orange overall-col">20.93</td></tr>
+              <tr><td><span class="rank-badge rank-default">#6</span></td><td class="model-cell">VITA-Audio<a class="model-link-btn" href="https://github.com/VITA-MLLM/VITA-Audio" target="_blank" title="paper/link">🔗</a></td><td class="score-red">8.11</td><td class="score-red">3.39</td><td class="score-red">5.75</td><td class="score-red">6.43</td><td class="score-blue">33.33</td><td class="score-green">63.16</td><td class="score-green">34.31</td><td class="score-orange overall-col">22.88</td></tr>
+              <tr><td><span class="rank-badge rank-default">#7</span></td><td class="model-cell">GLM-4-Voice<a class="model-link-btn" href="https://github.com/THUDM/GLM-4-Voice" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">18.92</td><td class="score-red">2.54</td><td class="score-orange">10.73</td><td class="score-red">5.71</td><td class="score-blue">16.67</td><td class="score-blue">10.53</td><td class="score-orange">10.97</td><td class="score-orange overall-col">10.87</td></tr>
+              <tr><td><span class="rank-badge rank-default">#8</span></td><td class="model-cell">Freeze-Omni<a class="model-link-btn" href="https://github.com/VITA-MLLM/Freeze-Omni" target="_blank" title="paper/link">🔗</a></td><td class="score-orange">16.22</td><td class="score-red">1.69</td><td class="score-red">8.96</td><td class="score-red">4.29</td><td class="score-blue">10.83</td><td class="score-blue">11.84</td><td class="score-orange">8.99</td><td class="score-orange overall-col">8.97</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Categories Section (moved and beautified) -->
+      <div class="container" id="categories" style="max-width:1200px;">
+        <div class="card" style="padding:32px 32px 24px 32px; background:linear-gradient(135deg,#e0e7ef 0%,#d0e3fa 100%); box-shadow:0 8px 32px rgba(0,0,0,0.10),0 2px 8px rgba(0,0,0,0.10);">
+          <div class="card-title" style="font-size:1.6em; margin-bottom:10px; color:#2563eb;">Categories</div>
+          <div class="card-label" style="font-size:1.08em; margin-bottom:24px; color:#374151;">C3Bench evaluates models on the following key dialogue understanding dimensions:</div>
+          <div class="category-groups">
+            <!-- Ambiguity Group -->
+            <div class="category-group-card ambiguity">
+              <h3>Ambiguity</h3>
+              <div class="card-label">Overall performance on phonological and semantic ambiguity resolution tasks.</div>
+              <div class="category-cards">
+                <div class="category-card">
+                  <h4>Phonological Ambiguity</h4>
+                  <div class="card-label">Understanding of sound-based ambiguities and phonological variations in spoken language.</div>
+                </div>
+                <div class="category-card">
+                  <h4>Semantic Ambiguity</h4>
+                  <div class="card-label">Disambiguation of word meanings and semantic interpretations in different contexts.</div>
+                </div>
+              </div>
+            </div>
+            <!-- Context-dependency Group -->
+            <div class="category-group-card contextdep">
+              <h3>Context-dependency</h3>
+              <div class="card-label">Understanding statements that require contextual information from dialogue history.</div>
+              <div class="category-cards">
+                <div class="category-card">
+                  <h4>Omission</h4>
+                  <div class="card-label">Ability to handle missing information and implicit context in dialogue.</div>
+                </div>
+                <div class="category-card">
+                  <h4>Coreference</h4>
+                  <div class="card-label">Resolution of pronouns and references to previously mentioned entities.</div>
+                </div>
+                <div class="category-card">
+                  <h4>Multi-turn Interaction</h4>
+                  <div class="card-label">Coherence and context maintenance across multiple conversation turns.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 类别例子模块 -->
+    <div class="container" id="examples">
+      <div class="card" style="margin-top:32px;">
+        <div class="card-title">Examples
+        </div>
+        <div class="ex-tab-bar" style="margin-bottom:16px; display:flex;">
+          <button id="btn-ex-en" class="ex-tab-btn active" onclick="showExampleLang('en')">English</button>
+          <button id="btn-ex-zh" class="ex-tab-btn" onclick="showExampleLang('zh')">Chinese</button>
+        </div>
+        <div id="ex-en" class="ex-lang-panel">
+          <div class="ex-cat-card"><h4>Phonological Ambiguity</h4>
+            <ul>
+              <li><audio controls src="examples\english\phonological\party.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">The sentence below is hard to understand:</span><br>
+                You're going to the party? <br><br>
+                <span class="instruction-text">Could you tell me what it means?</span>
+              </span></div><div class="answer-block"><b>Answer: </b>Rising intonation indicates a question: "Are you going to the party?"</div></div></li>
+              <li><audio controls src="examples\english\phonological\glasses.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">The sentence below with pause is hard to understand:</span><br>
+                He saw the man / with glasses.<br><br>
+                <span class="instruction-text">Could you tell me what it means?</span>
+              </span></div><div class="answer-block"><b>Answer:</b> The pause after "man" indicates that "with glasses" is an additional description, meaning "He saw the man, and he was wearing glasses."</div></div></li>
+              <li><audio controls src="examples\english\phonological\generation.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">Here is a sentence:</span><br>
+                He saw the man with glasses.<br><br>
+                <span class="instruction-text">The intended meaning is:</span><br>
+                He saw the man, and he was wearing glasses.<br><br>
+                <span class="instruction-text">Please read it out with the correct pause.</span>
+              </span></div><div class="answer-block"><b>Answer:</b> He saw the man / with glasses.</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Semantic Ambiguity</h4>
+            <ul>
+              <li><audio controls src="examples\english\semantic\Smith.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">The sentence below contains ambiguity:</span><br>
+                Mr. Smith loves music more than his wife.<br><br>
+                <span class="instruction-text">Please tell me how to understand it.</span>
+              </span></div><div class="answer-block"><b>Answer:</b> The phrase "more than his wife" is ambiguous.<br>1. Mr. Smith loves music more than he loves his wife.<br>2. Mr. Smith loves music more than his wife does.</div></div></li>
+              <li><audio controls src="examples\english\semantic\Friend.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">The sentence below contains ambiguity:</span><br>
+                Mike failed to make friends with John because he is too selfish.<br><br>
+                <span class="instruction-text">Please tell me how to understand it.</span>
+              </span></div><div class="answer-block"><b>Answer:</b> The pronoun "he" is ambiguous.<br>1. Mike failed to make friends with John because Mike is too selfish.<br>2. Mike failed to make friends with John because John is too selfish.</div></div></li>
+              <li><audio controls src="examples\english\semantic\bear.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">The sentence below contains ambiguity:</span><br>
+                She can't bear children so she never talks about them.<br><br>
+                <span class="instruction-text">Please tell me how to understand it.</span>
+              </span></div><div class="answer-block"><b>Answer:</b> Ambiguity in "bear":<br>1. Unable to give birth to children<br>2. Unable to tolerate children.</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Omission</h4>
+            <ul>
+              <li><audio controls src="examples\english\omission\TomAngry.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">Please listen carefully to the following sentence, after the sentence ends, I will ask you some questions:</span><br>
+                Your advice made me happy but Tom angry.<br><br> 
+                <span class="instruction-text">Some content has been omitted in the sentence, please fill in the omitted parts and provide the complete sentence.</span>
+              </span></div><div class="answer-block"><b>Answer:</b> Your advice made me happy but your advice made Tom angry.</div></div></li>
+              <li><audio controls src="examples\english\omission\TomDetection.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">Please listen carefully to the following sentence, after the sentence ends, I will ask you some questions:</span><br>
+                Your advice made me happy but Tom angry.<br><br> 
+                <span class="instruction-text">Is there any omission of content in the sentence?</span>
+              </span></div><div class="answer-block"><b>Answer:</b> Yes, there is.</div></div></li>
+              <li><audio controls src="examples\english\omission\Panglong.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">Please listen carefully to the following sentence, after the sentence ends, I will ask you some questions:</span><br>
+                Once a worker, Pang Long now becomes a famous singer.<br><br> 
+                <span class="instruction-text">Some content has been omitted in the sentence, please fill in the omitted parts and provide the complete sentence.</span>
+              </span></div><div class="answer-block"><b>Answer:</b> Once he was a worker, Pang Long now becomes a famous singer.</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Coreference</h4>
+            <ul>
+              <li><audio controls src="examples\english\coreference\0.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">Please listen carefully to the following sentence, after the sentence ends, I will ask you some questions:</span><br> 
+                The trophy doesn't fit into the brown suitcase because it is too large.<br><br>
+                <span class="instruction-text">Are there any instances of pronouns being used to refer to nouns or noun phrases in the sentences above?</span>
+              </span></div><div class="answer-block"><b>Answer:</b> Yes.</div></div></li>
+              <li><audio controls src="examples\english\coreference\councilmen.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                The city councilmen refused the demonstrators a permit because they feared violence.<br><br>
+                <span class="instruction-text">What does the word </span>'they'<span class="instruction-text"> refer to: </span>
+                The city councilmen <span class="instruction-text">or</span> The demonstrators?
+              </span></div><div class="answer-block"><b>Answer:</b> The city councilmen.</div></div></li>
+              <li><audio controls src="examples\english\coreference\thank.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                Joan made sure to thank Susan for all the help she had recieved.<br><br>
+                <span class="instruction-text">What does the word </span>'she'<span class="instruction-text"> refer to: </span>Joan<span class="instruction-text">or</span>Susan?
+              </span></div><div class="answer-block"><b>Answer:</b> Joan.</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Multi-turn Interaction</h4>
+            <ul>
+              <li><audio controls src="examples\english\multi-turn\0.mp3"></audio> <span>Do you know anything about health food?</span></li>
+              <li><audio controls src="examples\english\multi-turn\1.mp3"></audio> <span>Can you give me some examples?</span></li>
+              <li><audio controls src="examples\english\multi-turn\2.mp3"></audio> <span>Really? Why we must have warm and fresh water?</span></li>
+              <li><audio controls src="examples\english\multi-turn\3.mp3"></audio> <span>Anything else?</span></li>
+              <li><audio controls src="examples\english\multi-turn\4.mp3"></audio> <span>Do you know anything about health food? 
+                <span class="instruction-text">If this question has been raised before, please directly provide the previous answer。</span>
+                </span></li>
+            </ul>
+          </div>
+        </div>
+        <div id="ex-zh" class="ex-lang-panel" style="display:none;">
+          <div class="ex-cat-card"><h4>Phonological Ambiguity</h4>
+            <ul>
+              <li><audio controls src="examples\chinese\phonological\apple0.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">下面有一个断句可能不正确的句子：</span><br>
+                这个苹果不大好吃。<br><br>
+                <span class="instruction-text">这个句子想表达的意思是：</span><br>
+                这个苹果不好吃。<br><br>
+                <span class="instruction-text">请用正确的断句读出这句话。</span>
+              </span></div><div class="answer-block"><b>Answer:</b> 这个苹果 / 不大好吃。</div></div></li>
+              <li><audio controls src="examples\chinese\phonological\dumpling.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+              <span class="instruction-text">可以请你帮我一个忙吗？我不太理解下面这段话，请你帮我给出合理的解释：</span><br>
+              没有凳子时应该站着吃饺子；有醋时应该蘸着吃饺子。</span></div><div class="answer-block"><b>Answer:</b> 站立的站和蘸醋的蘸发音相同，造成混淆。</div></div></li>
+              <li><audio controls src="examples\chinese\phonological\apple.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+              <span class="instruction-text">可以请你帮我一个忙吗？我不太理解下面这段话，请你帮我给出合理的解释：</span><br>
+              第一个苹果不大，好吃。第二个苹果，不大好吃。</span></div><div class="answer-block"><b>Answer:</b> 断句不同语义不同，第一个苹果比较小，但味道好，第二个苹果味道不好。</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Semantic Ambiguity</h4>
+            <ul>
+              <li><audio controls src="examples\chinese\semantic\rabbit.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">可以请你帮我一个忙吗？我不太理解下面这段话，请你帮我给出合理的解释：</span><br>
+              大人说：“这是小白兔的书吧。”<br>
+              孩子说：“不是小白兔的书，这是我的书。”</span></div><div class="answer-block"><b>Answer:</b> 小白兔的书可以是有关小白兔的书，也可以是属于小白兔的书，大人和孩子理解不同所以会造成歧义。</div></div></li>
+              <li><audio controls src="examples\chinese\semantic\sense.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                  <span class="instruction-text">可以请你帮我一个忙吗？我不太理解下面这段话，请你帮我给出合理的解释：</span><br>
+                甲说：“这是什么意思。”<br>
+                乙说：“没什么，意思意思。”<br>
+                甲说：“这就没意思了。”<br>
+                乙说：“小意思小意思。”<br>
+                甲说：“你这人真有意思。”<br>
+                乙说：“其实也没别的意思。”<br>
+                甲说：“那我就不好意思了。”<br>
+                乙说：“其实是我不好意思。”
+              </span></div><div class="answer-block"><b>Answer:</b> “意思”一词多义，在对话不同位置分别表示<br>“含义”、“送礼表意”、“无趣”、“简单”、“有趣”、“意图”、“难为情”<br>等多种意思，容易混淆。</div></div></li>
+              <li><audio controls src="examples\chinese\semantic\cloth.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">可以请你帮我一个忙吗？我不太理解下面这段话，请你帮我给出合理的解释：</span><br>
+              重庆的夏天能穿多少穿多少，重庆的冬天能穿多少穿多少。
+            </span></div><div class="answer-block"><b>Answer:</b> 冬天多穿，夏天少穿。</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Omission</h4>
+            <ul>
+              <li><audio controls src="examples\chinese\omission\gusu.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">我有一道考察语义理解的题目如下，请听完后回答我的问题：</span><br>
+                甲说：“你好，我出差来到苏州，我想抽空去旅游，能帮我推荐游乐场吗？我想去。”<br>
+                乙说：“你想找个什么价位的呢？”<br>
+                甲说：“消费水平最好在中等的。”<br><br>
+                <span class="instruction-text">上面这段对话的最后一句中存在省略现象，请补全被省略的内容，给出省略内容被补全后的完整语句。</span>
+                </span></div><div class="answer-block"><b>Answer:</b> 消费水平最好在中等的游乐场。</div></div></li>
+              <li><audio controls src="examples\chinese\omission\wujiang.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">我有一道考察语义理解的题目如下，请听完后回答我的问题：</span><br>
+                甲说：“你好，我和家人一起来苏州旅游，能帮我在吴江地区找一个好玩的景点吗？”<br>
+                乙说：“好的，您希望找个贵一点的还是便宜一点的景点呢？”<br>
+                甲说：“偏贵一点的吧。”<br><br>
+                <span class="instruction-text">上面这段对话的最后一句中存在省略现象，请补全被省略的内容，给出省略内容被补全后的完整语句。</span>
+              </span></div><div class="answer-block"><b>Answer:</b> 偏贵点的景点吧。</div></div></li>
+              <li><audio controls src="examples\chinese\omission\wujiang0.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">我有一道考察语义理解的题目如下，请听完后回答我的问题：</span><br>
+                甲说：“你好，我和家人一起来苏州旅游，能帮我在吴江地区找一个好玩的景点吗？”<br>
+                乙说：“好的，您希望找个贵一点的还是便宜一点的景点呢？”<br>
+                甲说：“偏贵一点的吧。”<br><br>
+                <span class="instruction-text">请问对话的最后一句中是否存在省略现象？</span>
+                </span></div><div class="answer-block"><b>Answer:</b> 是。</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Coreference</h4>
+            <ul>
+              <li><audio controls src="examples\chinese\coreference\gusu.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+              <span class="instruction-text">我有一道考察语义理解的题目如下，请听完后回答我的问题：</span><br>
+              甲说：“我们一家来苏州旅游，想在姑苏区找一个便宜一点的景点。”<br>
+              乙说：“符合您要求的景点可多了，不知道该给你推荐哪个，你对景点类型有要求吗？”<br>
+              甲说：“我对这个类型没有什么要求，只要便宜的。”<br><br>
+              <span class="instruction-text">上面这段对话的最后一句中存在代词指代具体内容的现象，请使用代词指代的内容替换代词，给出代词被替换后的完整语句。</span>
+            </span></div><div class="answer-block"><b>Answer:</b> 我对景点类型没有什么要求，只要便宜的景点。</div></div></li>
+              <li><audio controls src="examples\chinese\coreference\Amoy.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+              <span class="instruction-text">我有一道考察语义理解的题目如下，请听完后回答我的问题：</span><br>
+              甲说：“你好，下周五我想去厦门。请问有上午从深圳出发的高铁吗？”<br>
+              乙说：“您可以乘坐高铁一六零二，深圳北到厦门北。”<br>
+              甲说：“这个车几点出发呢？<br><br>
+              <span class="instruction-text">上面这段对话的最后一句中存在代词指代具体内容的现象，请使用代词指代的内容替换代词，给出代词被替换后的完整语句。</span>
+            </span></div><div class="answer-block"><b>Answer:</b> 高铁一六零二几点出发呢？</div></div></li>
+              <li><audio controls src="examples\chinese\coreference\AmoyDetection.mp3"></audio> <div class="qa-blocks"><div class="question-block"><span>
+                <span class="instruction-text">我有一道考察语义理解的题目如下，请听完后回答我的问题：</span><br>
+                甲说：“你好，下周五我想去厦门。请问有上午从深圳出发的高铁吗？”<br>
+                乙说：“您可以乘坐高铁一六零二，深圳北到厦门北。”<br>
+                甲说：“这个车几点出发呢？<br><br>
+                <span class="instruction-text">请问对话的最后一句中是否存在使用代词指代具体内容的现象？</span></span></div><div class="answer-block"><b>Answer:</b> 是。</div></div></li>
+            </ul>
+          </div>
+          <div class="ex-cat-card"><h4>Multi-turn Interaction (Only Input)</h4>
+            <ul>
+              <li><audio controls src="examples\chinese\multi-turn\0.mp3"></audio> <span>你好，帮我推荐一个价位在四百至五百元之间的酒店，评分要在四点五分以上的，谢谢。</span></li>
+              <li><audio controls src="examples\chinese\multi-turn\1.mp3"></audio> <span>雅悦酒店北京西直门店的周边有啥好玩的地方吗？</span></li>
+              <li><audio controls src="examples\chinese\multi-turn\2.mp3"></audio> <span>我和妈妈去吃饭，想找一家有酸辣蕨根粉的餐馆，最好人均消费在一百到一百五十元之间的，评分在四分以上的，有推荐的吗？</span></li>
+              <li><audio controls src="examples\chinese\multi-turn\3.mp3"></audio> <span>青年餐厅的地址在哪呢？周边有啥好吃的餐馆？</span></li>
+              <li><audio controls src="examples\chinese\multi-turn\4.mp3"></audio> <span>好的，我约了同学出去玩，帮我推荐一个没有门票费的景点吧。</span></li>
+              <li><audio controls src="examples\chinese\multi-turn\5.mp3"></audio> <span>童话树屋适合游玩多长时间呢？</span></li>
+              <li><audio controls src="examples\chinese\multi-turn\6.mp3"></audio> <span>好的，谢谢。</span></li>
+              <li><audio controls src="examples\chinese\multi-turn\7.mp3"></audio> <span>你好，帮我推荐一个价位在四百至五百元之间的酒店，评分要在四点五分以上的，谢谢。<br><br><span class="instruction-text">如果之前出现过该问题，则直接给出之前的答案。</span></span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Responses -->
+    <div class="container" id="model-response-examples">
+      <div class="card" style="margin-top:32px; background:linear-gradient(135deg,#f8fbff 0%,#e0f2fe 100%); box-shadow:0 8px 32px rgba(37,99,235,0.08),0 2px 8px rgba(37,99,235,0.06); border:1.5px solid #e0f2fe;">
+        <div class="card-title" style="font-size:1.45em; margin-bottom:10px; color:#2563eb; letter-spacing:0.5px;">Responses</div>
+        <div class="card-label" style="font-size:1.08em; margin-bottom:24px; color:#374151;">Below are model response examples for benchmark test cases. Each block shows the input example and outputs from different SDMs, including audio and text. <br> <span style='color:#16a34a;font-weight:600;'>Green</span> indicates correct, <span style='color:#dc2626;font-weight:600;'>red</span> indicates incorrect.</div>
+
+
+        <!-- 1. Phonological Ambiguity -->
+        <div class="response-phenomena-title">Phonological Ambiguity</div>
+        <div class="model-example-block" style="margin-bottom:38px; border-radius:18px; box-shadow:0 4px 24px #2563eb18; background:#fff; padding:24px 18px;">
+          <div class="input-example" style="background:#e0f2fe;border-radius:12px;padding:18px 18px 12px 18px;flex:1 1 320px;min-width:260px;box-shadow:0 2px 8px #2563eb11;position:relative;margin-bottom:12px;">
+            <span style="position:absolute;top:12px;right:18px;background:#2563eb;color:#fff;padding:2px 12px;border-radius:8px;font-size:0.98em;letter-spacing:0.5px;">Input Example</span>
+            <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:340px;"> <source src="examples/chinese/phonological/apple0.mp3"> </audio>
+            <div class="response-text zh">下面有一个断句可能不正确的句子：<br>
+这个苹果不大好吃。<br>
+这个句子想表达的意思是：<br>
+这个苹果不好吃。<br>
+请用正确的断句读出这句话。</div>
+          </div>
+          <div class="model-responses" style="display:flex;flex-direction:column;gap:18px;flex:2 1 0;flex-wrap:nowrap;align-items:stretch;">
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #16a34a22;border:2.5px solid #16a34a;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">GLM-4-Voice</b>
+                <span class="correct-label">Correct</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/phonological/GLM-4-Voice.mp3"> </audio>
+              <div class="response-text zh">这个苹果/不大好吃。</div>
+            </div>
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #dc262622;border:2.5px solid #dc2626;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">A Spoken Dialogue Model</b>
+                <span class="incorrect-label">Incorrect</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/phonological/MooER-Omni.wav"> </audio>
+              <div class="response-text zh">这个苹果不大/好吃。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Semantic Ambiguity -->
+        <div class="response-phenomena-title">Semantic Ambiguity</div>
+        <div class="model-example-block" style="margin-bottom:38px; border-radius:18px; box-shadow:0 4px 24px #2563eb18; background:#fff; padding:24px 18px;">
+          <div class="input-example" style="background:#e0f2fe;border-radius:12px;padding:18px 18px 12px 18px;flex:1 1 320px;min-width:260px;box-shadow:0 2px 8px #2563eb11;position:relative;margin-bottom:12px;">
+            <span style="position:absolute;top:12px;right:18px;background:#2563eb;color:#fff;padding:2px 12px;border-radius:8px;font-size:0.98em;letter-spacing:0.5px;">Input Example</span>
+            <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:340px;"> <source src="examples/english/semantic/Smith.mp3"> </audio>
+            <div class="response-text zh">The sentence below contains ambiguity:<br>
+Mr. Smith loves music more than his wife.<br>
+Please tell me how to understand it.</div>
+          </div>
+          <div class="model-responses" style="display:flex;flex-direction:column;gap:18px;flex:2 1 0;flex-wrap:nowrap;align-items:stretch;">
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #16a34a22;border:2.5px solid #16a34a;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">GPT-4o-Audio-Preview</b>
+                <span class="correct-label">Correct</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/semantic/GPT-4o-Audio-Preview.wav"> </audio>
+              <div class="response-text zh">The sentence "Mr. Smith loves music more than his wife" is ambiguous because it can be interpreted in two different ways:<br>
+1. Mr. Smith loves music more than he loves his wife. In this interpretation, music is of greater importance or brings more joy to Mr. Smith than his relationship with his wife.<br>
+2. Mr. Smith loves music more than his wife loves music. In this interpretation, Mr. Smith's passion or interest in music surpasses that of his wife.<br>
+To clarify the intended meaning, additional context or a rephrased sentence would be helpful.</div>
+            </div>
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #dc262622;border:2.5px solid #dc2626;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">A Spoken Dialogue Model</b>
+                <span class="incorrect-label">Incorrect</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/semantic/LLaMA-Omni.wav"> </audio>
+              <div class="response-text zh">This sentence contains ambiguity because it's unclear whether Mr. Smith loves music more than his wife loves music or more than his wife loves something else.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Omission -->
+        <div class="response-phenomena-title">Omission</div>
+        <div class="model-example-block" style="margin-bottom:38px; border-radius:18px; box-shadow:0 4px 24px #2563eb18; background:#fff; padding:24px 18px;">
+          <div class="input-example" style="background:#e0f2fe;border-radius:12px;padding:18px 18px 12px 18px;flex:1 1 320px;min-width:260px;box-shadow:0 2px 8px #2563eb11;position:relative;margin-bottom:12px;">
+            <span style="position:absolute;top:12px;right:18px;background:#2563eb;color:#fff;padding:2px 12px;border-radius:8px;font-size:0.98em;letter-spacing:0.5px;">Input Example</span>
+            <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:340px;"> <source src="examples/chinese/omission/wujiang0.mp3"> </audio>
+            <div class="response-text zh">我有一道考察语义理解的题目如下，请听完后回答我的问题：<br>
+甲说：“你好，我和家人一起来苏州旅游，能帮我在吴江地区找一个好玩的景点吗？”<br>
+甲说：“好的，您希望找个贵一点的还是便宜一点的景点呢？”<br>
+甲说：“偏贵一点的吧。”<br>
+请问对话的最后一句中是否存在省略现象？</div>
+          </div>
+          <div class="model-responses" style="display:flex;flex-direction:column;gap:18px;flex:2 1 0;flex-wrap:nowrap;align-items:stretch;">
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #16a34a22;border:2.5px solid #16a34a;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">GPT-4o-Audio-Preview</b>
+                <span class="correct-label">Correct</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/omission/GPT-4o-Audio-Preview.wav"> </audio>
+              <div class="response-text zh">是的，对话中的最后一句话存在省略现象。完整的表述应该是 “便贵一点的景点吧”。 省略的是“的景点”这部分。</div>
+            </div>
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #dc262622;border:2.5px solid #dc2626;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">A Spoken Dialogue Model</b>
+                <span class="incorrect-label">Incorrect</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/omission/VITA-Audio.wav"> </audio>
+              <div class="response-text zh">好的，我们来分析一下。甲说他和家人来苏州旅游，想在吴江找一个好玩的景点。乙问甲是希望找个贵一点的还是便宜一点的景点。甲说他更喜欢贵一点的。从这里看，甲的意思是希望景点质量好，但预算可以稍微高一些。乙没有表现出任何反对意见，所以甲的请求没有被拒绝。因此，对话的最后一句中没有省略现象。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Coreference -->
+        <div class="response-phenomena-title">Coreference</div>
+        <div class="model-example-block" style="margin-bottom:38px; border-radius:18px; box-shadow:0 4px 24px #2563eb18; background:#fff; padding:24px 18px;">
+          <div class="input-example" style="background:#e0f2fe;border-radius:12px;padding:18px 18px 12px 18px;flex:1 1 320px;min-width:260px;box-shadow:0 2px 8px #2563eb11;position:relative;margin-bottom:12px;">
+            <span style="position:absolute;top:12px;right:18px;background:#2563eb;color:#fff;padding:2px 12px;border-radius:8px;font-size:0.98em;letter-spacing:0.5px;">Input Example</span>
+            <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:340px;"> <source src="examples/english/coreference/thank.mp3"> </audio>
+            <div class="response-text zh">Joan made sure to thank Susan for all the help she had recieved.<br>
+What does the word "she" refer to: Joan or Susan?</div>
+          </div>
+          <div class="model-responses" style="display:flex;flex-direction:column;gap:18px;flex:2 1 0;flex-wrap:nowrap;align-items:stretch;">
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #16a34a22;border:2.5px solid #16a34a;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">GPT-4o-Audio-Preview</b>
+                <span class="correct-label">Correct</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/coreference/GPT-4o-Audio-Preview.wav"> </audio>
+              <div class="response-text zh">In the sentence, the word "she" refers to Joan, indicating that Joan is the one who made sure to thank Susan for all the help she had received.</div>
+            </div>
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #dc262622;border:2.5px solid #dc2626;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">A Spoken Dialogue Model</b>
+                <span class="incorrect-label">Incorrect</span>
+              </div>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/coreference/Freeze-Omni.wav"> </audio>
+              <div class="response-text zh">In this context, the word "she" refers to "SUSAN". The sentence "John thanked Susan for all the help she had received" indicates that Susan provided the assistance that John is acknowledging.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Multi-turn Interaction -->
+        <div class="response-phenomena-title">Multi-turn Interaction</div>
+        <div class="model-example-block" style="margin-bottom:38px; border-radius:18px; box-shadow:0 4px 24px #2563eb18; background:#fff; padding:24px 18px;">
+          <div class="input-example" style="background:#e0f2fe;border-radius:12px;padding:18px 18px 12px 18px;flex:1 1 320px;min-width:260px;box-shadow:0 2px 8px #2563eb11;position:relative;margin-bottom:12px;">
+            <span style="position:absolute;top:12px;right:18px;background:#2563eb;color:#fff;padding:2px 12px;border-radius:8px;font-size:0.98em;letter-spacing:0.5px;">Input Example</span>
+            <span class="response-label">First Input</span>
+            <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:340px;"> <source src="examples/chinese/multi-turn/0.mp3"> </audio>
+            <div class="response-text zh">你好，帮我推荐一个价位在四百至五百元之间的酒店，评分要在四点五分以上的，谢谢。</div>
+
+            <span class="response-label">Middle Input: ...</span>
+
+            <span class="response-label">Last Input</span>
+            <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:340px;"> <source src="examples/chinese/multi-turn/7.mp3"> </audio>
+            <div class="response-text zh">你好，帮我推荐一个价位在四百至五百元之间的酒店，评分要在四点五分以上的，谢谢。<br>
+如果之前出现过该问题，则直接给出之前的答案。</div>
+          </div>
+          <div class="model-responses" style="display:flex;flex-direction:column;gap:18px;flex:2 1 0;flex-wrap:nowrap;align-items:stretch;">
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #16a34a22;border:2.5px solid #16a34a;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">GPT-4o-Audio-Preview</b>
+                <span class="correct-label">Correct</span>
+              </div>
+              <span class="response-label">First Response</span>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/multi/GPT-4o-Audio-Preview-0.wav"> </audio>
+              <div class="response-text zh">在这个价格范围内，我为您推荐几家评分在4.5分以上的酒店：<br>
+1. 汉庭酒店（或类似酒店品牌）：这类经济型酒店通常具有较高的性价比，在用户评价中也往往有不错的口碑。<br>
+2. 怡莱酒店：作为汉庭酒店集团旗下的品牌，怡莱酒店通常提供高品质的服务，且价格适中。<br>
+3. 7天连锁酒店：该连锁酒店在全国范围内有众多分店，也有很多口碑不错的店面。<br>
+以上都是一些比较常见且受欢迎的品牌连锁酒店，您可以根据地理位置和具体需求进行选择。</div>
+              <span class="response-label">Last Response</span>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/multi/GPT-4o-Audio-Preview-7.wav"> </audio>
+              <div class="response-text zh">当然，之前推荐的是一些经济型连锁酒店品牌，这些酒店通常价格符合您的预算，而且评分也往往在4.5分以上。可以考虑以下这些品牌：<br>
+1. 汉庭酒店：遍布全国，性价比高，服务也很不错。<br>
+2. 怡莱酒店：汉庭酒店集团旗下品牌，提供高品质服务，价格适中。<br>
+3. 7天连锁酒店：全国有很多分店，评价也较好。<br>
+这些都是经济型连锁酒店，您可以在预订网站上查看具体的酒店位置和评价，选择符合您需求的酒店。</div>
+            </div>
+            <div class="model-response" style="width:auto; max-width:100%;border-radius:12px;padding:16px 14px 12px 14px;margin-bottom:8px;box-shadow:0 2px 8px #dc262622;border:2.5px solid #dc2626;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <b style="color:#2563eb;">A Spoken Dialogue Model</b>
+                <span class="incorrect-label">Incorrect</span>
+              </div>
+              <span class="response-label">First Response</span>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/multi/GLM-4-Voice-first.mp3"> </audio>
+              <div class="response-text zh">好的，我找到了几家符合您要求的酒店。比如，成都锦江之星武侯祠店，评分4.8，价格在450元左右。还有成都望江宾馆，评分4.7，价格在480元左右。最后是成都武侯祠快捷酒店，评分4.6，价格在440元左右。您可以选择自己喜欢的。</div>
+              <span class="response-label">Last Response</span>
+              <audio controls style="display:block;margin:8px 0 12px 0;width:100%;max-width:320px;"> <source src="responses/multi/GLM-4-Voice-last.mp3"> </audio>
+              <div class="response-text zh">你好，根据你的要求，我推荐如家快捷酒店。它在中国很多城市都有分店，评分都在4.5分以上，价格在400到500元之间。你可以通过酒店的官网或者在线旅游平台预订。希望这个推荐能帮到你！</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- SDM Results Submission -->
+    <div class="container" id="submission">
+      <div class="card" style="margin-top:32px;">
+        <div class="card-title">SDM Results Submission</div>
+        <div class="card-label" style="margin-bottom:8px;">Want to submit your SDM results to C3Bench?</div>
+        <div style="margin-bottom:8px;">
+          Please follow the instructions at:
+          <a href="https://github.com/step-out/C3" target="_blank" style="color:#2563eb;text-decoration:underline;">C3Bench Submission Guide</a>
+        </div>
+        <div class="card-label" style="font-size:0.95em;">The link provides detailed steps for preparing and submitting your Spoken Dialogue Model results to the leaderboard.</div>
+      </div>
+    </div>
+    <!-- Citation -->
+    <div class="container" id="citation">
+      <div class="card" style="margin-top:20px;">
+        <div class="card-title">Citation</div>
+        <div class="card-label" style="margin-bottom:8px;">If you use C3Bench in your research, please cite us:</div>
+        <pre style="background:#f3f4f6;padding:12px;border-radius:6px;font-size:0.98em;overflow-x:auto;">@inproceedings{c3bench,
+          title={C3: A Bilingual Benchmark for Spoken Dialogue Models Exploring Challenges in Complex Conversations},
+          author={Ma, Chengqian and Tao, Wei and Guo, Yiwen},
+          booktitle={arXiv Preprint},
+          year={2025},
+        }
+}</pre>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 
